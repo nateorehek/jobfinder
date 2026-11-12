@@ -20,5 +20,13 @@
   { "provider":"lever", "board":"zoox", "company":"Zoox", "fields":["engineering","cs","data"] },
   { "provider":"ashby", "board":"ramp", "company":"Ramp", "fields":["business","cs","data","design"] },
   { "provider":"ashby", "board":"notion", "company":"Notion", "fields":["cs","business","design"] },
-  { "provider":"ashby", "board":"finch", "company":"Finch", "fields":["cs","data","business"] }
+  { "provider":"ashby", "board":"finch", "company":"Finch", "fields":["cs","data","business"] },
+  { "provider":"greenhouse", "board":"avidxchangeinc", "company":"AvidXchange", "fields":["cs","data","business","design"] },
+  { "provider":"greenhouse", "board":"choreo", "company":"Choreo", "fields":["business","data"] },
+  { "provider":"greenhouse", "board":"cpisecurity", "company":"CPI Security", "fields":["cs","data","business","engineering","design"] },
+  { "provider":"greenhouse", "board":"figure", "company":"Figure", "fields":["cs","data","business","design"] },
+  { "provider":"greenhouse", "board":"lendingtree", "company":"LendingTree", "fields":["cs","data","business","design"] },
+  { "provider":"greenhouse", "board":"monetary", "company":"Monetary", "fields":["cs","data","business","engineering"] },
+  { "provider":"greenhouse", "board":"redventures", "company":"Red Ventures", "fields":["cs","data","business","design"] },
+  { "provider":"greenhouse", "board":"rvohealth", "company":"RVO Health", "fields":["cs","data","business","design","science"] }
 ]

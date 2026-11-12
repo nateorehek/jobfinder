@@ -45,6 +45,20 @@ test('deduplicates source URLs, filters on any office, and preserves bookmarks w
   } finally { db.close(); }
 });
 
+test('ZIP search recognizes offices listed as alternatives and preserves the Oregon state code',()=>{
+  const db = openDb(':memory:');
+  try {
+    const job = normalizeJob({...raw,locations:['Portland, OR or Charlotte, NC (Hybrid)']},source);
+    assert.equal(job.points.length,2);
+    recordBoard(db,source,[job]);
+    for (const zip of ['28202','97201']) {
+      const result = searchJobs(db,new URLSearchParams({zip,radius:'25'}));
+      assert.equal(result.total,1);
+      assert.equal(result.jobs[0].id,job.id);
+    }
+  } finally { db.close(); }
+});
+
 test('failed refresh preserves listings and only checks boards mapped to the requested field', async ()=>{
   const db = openDb(':memory:');
   try {
