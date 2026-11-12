@@ -12,31 +12,6 @@ node server.mjs
 
 Open [localhost:3000](http://127.0.0.1:3000). The first refresh starts in the background. The example catalog appears until the first successful feed check. Account data and listings persist in `data/fieldwork.sqlite`. Use `node --test` to verify the app or `node server.mjs --sync` to run a one-off refresh.
 
-## Push to GitHub in four steps
-
-Create an empty GitHub repository named `jobfinder`. Leave the README, license, and .gitignore options unchecked. In this local project directory, check that `git --version` works, then add your remote once. Replace `YOUR-GITHUB-USERNAME` with your actual username.
-
-```powershell
-git remote add origin https://github.com/YOUR-GITHUB-USERNAME/jobfinder.git
-```
-
-If you already configured `origin`, use `git remote -v` to verify it and skip the add command. Run the following push commands **one at a time**. After each push, refresh your GitHub repo and review the new commit before pushing the next stage.
-
-| Stage | What it adds | PowerShell command |
-| --- | --- | --- |
-| 1 | Responsive interface, example jobs, light and dark modes | `git push origin refs/tags/stage-1-interface:refs/heads/main` |
-| 2 | Accounts, saved jobs, SQLite search, nationwide ZIP data | `git push origin refs/tags/stage-2-accounts-search:refs/heads/main` |
-| 3 | Live boards, scheduled and field-specific checks, Bluesky ranking | `git push origin refs/tags/stage-3-live-feeds:refs/heads/main` |
-| 4 | Docker, GitHub Actions, deployment and maintenance docs | `git push origin refs/tags/stage-4-deployment:refs/heads/main` |
-
-On Windows, if Git reports `schannel: SEC_E_UNTRUSTED_ROOT`, try the command with OpenSSL and verification enabled:
-
-```powershell
-git -c http.sslBackend=openssl -c http.sslVerify=true push origin refs/tags/stage-1-interface:refs/heads/main
-```
-
-If that works, `git config --local http.sslBackend openssl` applies the same backend to later pushes from this repo. If your Git installation is new and PowerShell cannot find it, reopen PowerShell after the installer finishes and check `git --version` again. If GitHub already has an initial commit, Git may reject the push. Use an empty repository for this sequence and preserve existing remote work.
-
 ## Deploy
 
 The application needs a running Node process and a persistent disk. For a Docker host, from the project folder run:
