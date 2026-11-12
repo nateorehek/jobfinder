@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { openDb,searchJobs,stamp } from '../lib/db.mjs';
 import { normalizeJob } from '../lib/normalize.mjs';
 import { createRefresh,recordBoard } from '../lib/refresh.mjs';
-import { blueskyScores } from '../lib/sources.mjs';
+import { blueskyScores,fetchBoard } from '../lib/sources.mjs';
 import { makeServer } from '../server.mjs';
 
 const source = {id:'greenhouse:exampleco',provider:'greenhouse',board:'exampleco',company:'Example Co',fields:['cs']};
@@ -75,6 +75,42 @@ test('failed refresh preserves listings and only checks boards mapped to the req
     assert.equal(refresh.status('science').failed,0);
     assert.equal(refresh.start('cs').state,'recent');
     assert.equal(searchJobs(db,new URLSearchParams()).total,1);
+  } finally { db.close(); }
+});
+
+test('imports active summer internships and keeps employer details on duplicates',async ()=>{
+  const db = openDb(':memory:');
+  try {
+    const community = {id:'simplifyjobs:summer2027',provider:'simplifyjobs',board:'summer2027',fields:['cs','data']};
+    const listing = {
+      active:true,is_visible:true,terms:['Summer 2027'],category:'AI/ML/Data',company_name:' Example Co ',
+      title:'Campus Program',locations:['Charlotte, NC','Fort Mill, SC'],date_posted:1782864000,
+    };
+    const ashbyUrl = 'https://jobs.ashbyhq.com/exampleco/123456';
+    const entries = [
+      {...listing,url:raw.url},
+      {...listing,url:ashbyUrl+'/application?embed=true'},
+      {...listing,url:'https://example.com/closed',active:false},
+      {...listing,url:'https://example.com/hidden',is_visible:false},
+      {...listing,url:'https://example.com/off-season',terms:['Fall 2027']},
+    ];
+    const json = new Response(JSON.stringify(entries),{headers:{'Content-Type':'text/plain'}});
+    const jobs = await fetchBoard(community,async()=>json);
+    assert.equal(jobs.length,2);
+    assert.equal(jobs[1].canonical,ashbyUrl);
+    assert.equal(jobs[1].published,'2026-07-01 00:00:00');
+    recordBoard(db,source,[normalizeJob(raw,source)]);
+    recordBoard(db,community,jobs);
+    const search = q=>searchJobs(db,new URLSearchParams(q));
+    assert.equal(search('kind=intern').total,2);
+    const charlotte = search('zip=28202&radius=25&field=data&kind=intern').jobs;
+    assert.equal(charlotte.length,1);
+    assert.equal(charlotte[0].source,'SimplifyJobs');
+    assert.equal(charlotte[0].company,'Example Co');
+    const employer = search('q=React').jobs[0];
+    assert.equal(employer.source,'Greenhouse');
+    assert.deepEqual(employer.skills,['TypeScript','React']);
+    assert.equal(db.prepare('SELECT count(*) AS count FROM job_sources WHERE job_id=?').get(employer.id).count,2);
   } finally { db.close(); }
 });
 

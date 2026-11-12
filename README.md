@@ -38,5 +38,6 @@ See the [architecture and operations guide](docs/architecture.md) for data flow,
 ## Sources and coverage
 
 - The app polls official public [Greenhouse](https://docs.greenhouse.io/job-board.html), [Lever](https://github.com/lever/postings-api), and [Ashby](https://developers.ashbyhq.com/docs/public-job-posting-api) employer boards. Coverage depends on the configured employers.
+- Active, publicly listed Summer 2027 internships also come from [SimplifyJobs and the Pitt Computer Science Club](https://github.com/SimplifyJobs/Summer2027-Internships). These listings use the existing internship cards and filters. When an employer board also lists the role, Fieldwork uses the employer's details.
 - Popularity uses [Bluesky public search](https://github.com/bluesky-social/atproto/blob/main/packages/bsky/src/api/app/bsky/feed/searchPosts.ts) and Fieldwork saves. Some listings have little or no external engagement data. LinkedIn applicant counts and Reddit or X metrics are outside the current integrations.
 - US ZIP coordinates are adapted from the [GeoNames postal code dataset](https://download.geonames.org/export/zip/) under [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/). The bundled file retains US ZIP, city, state, latitude, and longitude. Distances are approximate.

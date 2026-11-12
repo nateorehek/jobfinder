@@ -28,5 +28,6 @@
   { "provider":"greenhouse", "board":"lendingtree", "company":"LendingTree", "fields":["cs","data","business","design"] },
   { "provider":"greenhouse", "board":"monetary", "company":"Monetary", "fields":["cs","data","business","engineering"] },
   { "provider":"greenhouse", "board":"redventures", "company":"Red Ventures", "fields":["cs","data","business","design"] },
-  { "provider":"greenhouse", "board":"rvohealth", "company":"RVO Health", "fields":["cs","data","business","design","science"] }
+  { "provider":"greenhouse", "board":"rvohealth", "company":"RVO Health", "fields":["cs","data","business","design","science"] },
+  { "provider":"simplifyjobs", "board":"summer2027", "company":"SimplifyJobs", "fields":["cs","data","business","engineering","design"] }
 ]
