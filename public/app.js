@@ -15,6 +15,7 @@ const stored = (key, fallback) => { try { return JSON.parse(localStorage.getItem
 function store(key,value) { try { localStorage.setItem(key,JSON.stringify(value)); } catch {} }
 let account = null, online = true, page = 'browse', field = '', cursor = null, requestId = 0, openedJob;
 let jobs = [], saved = new Map(), localSaved = new Set(stored('fieldwork-example-saved',[]));
+let hasRefresh = false, refreshRun = 0;
 let theme = stored('fieldwork-theme', matchMedia('(prefers-color-scheme:dark)').matches ? 'dark' : 'light');
 function setTheme() {
   document.documentElement.dataset.theme = theme;
@@ -26,7 +27,14 @@ $('theme').onclick = () => { theme = theme === 'light' ? 'dark' : 'light'; store
 document.querySelectorAll('[data-icon]').forEach(el => { el.innerHTML = icon(el.dataset.icon); });
 const fieldOptions = [{ id:'',name:'All fields',icon:'grid' },...fields];
 $('fields').innerHTML = fieldOptions.map(f => '<button class="field" type="button" data-field="'+f.id+'" aria-pressed="'+(!f.id)+'">'+icon(f.icon)+f.name+'</button>').join('');
-$('fields').onclick = e => { const button = e.target.closest('[data-field]'); if (button) { field = button.dataset.field; show('browse'); } };
+$('fields').onclick = e => {
+  const button = e.target.closest('[data-field]');
+  if (!button) return;
+  field = button.dataset.field;
+  refreshMessage('');
+  show('browse');
+  if (online) checkForRoles(false);
+};
 function updateFields() {
   $('fields').querySelectorAll('[data-field]').forEach(b => b.setAttribute('aria-pressed',String(b.dataset.field === field)));
 }
@@ -103,6 +111,8 @@ async function show(nextPage = page, append = false) {
   for (const name of ['browse','saved']) $(name).setAttribute('aria-current',page === name ? 'page' : 'false');
   $('results-title').textContent = page === 'saved' ? 'Saved opportunities' : (fields.find(f => f.id === field)?.name || 'Explore opportunities');
   $('sort').disabled = page === 'saved';
+  $('refresh').hidden = !hasRefresh || page !== 'browse';
+  if (page === 'saved') $('refresh-status').hidden = true;
   $('more').hidden = true;
   $('feed-status').hidden = true;
   if (!append) { $('result-count').textContent = 'Loading…'; $('list').innerHTML = ''; }
@@ -137,6 +147,44 @@ async function show(nextPage = page, append = false) {
     else { $('feed-status').textContent = error.message; $('feed-status').hidden = false; $('more').hidden = false; }
   }
 }
+function refreshMessage(message) {
+  $('refresh-status').textContent = message;
+  $('refresh-status').hidden = !message || page !== 'browse';
+}
+async function checkForRoles(manual) {
+  const run = ++refreshRun;
+  const scope = field;
+  const target = '/refresh?' + query({field:scope});
+  const button = $('refresh');
+  try {
+    let info = await api(target,manual?{method:'POST'}:{});
+    if (run !== refreshRun) return;
+    hasRefresh = info.boards > 0;
+    button.hidden = !hasRefresh || page !== 'browse';
+    if (!hasRefresh) return;
+    if (!info.running) {
+      if (manual) refreshMessage('These sources were checked recently. Try again in a few minutes.');
+      else if (info.failed) refreshMessage(info.failed + ' of ' + info.boards + ' feeds unavailable on their last check.');
+      return;
+    }
+    button.disabled = true;
+    refreshMessage('Checking career feeds' + (scope ? ' for ' + fields.find(f=>f.id===scope).name : '') + '…');
+    for (let i=0;i<75 && info.running;i++) {
+      await new Promise(resolve=>setTimeout(resolve,1600));
+      if (run !== refreshRun) return;
+      info = await api(target);
+    }
+    if (run !== refreshRun) return;
+    if (!info.running && page === 'browse') await show('browse');
+    const failure = info.failed ? ' · ' + info.failed + ' of ' + info.boards + ' feeds unavailable' : '';
+    refreshMessage(info.running ? 'The check is still running. Results will update on your next search.' : 'Source check complete' + failure + '.');
+  } catch (error) {
+    if (manual && run === refreshRun) refreshMessage(error.message);
+  } finally {
+    if (run === refreshRun) button.disabled = false;
+  }
+}
+$('refresh').onclick = () => checkForRoles(true);
 $('search').onsubmit = e => { e.preventDefault(); show('browse'); };
 for (const id of ['intern','full','remote','include-remote','radius','sort']) $(id).onchange = () => { if ($('search').reportValidity()) show('browse'); };
 $('zip').oninput = () => { $('radius').disabled = !/^\d{5}$/.test($('zip').value) || $('remote').checked; };
@@ -181,7 +229,12 @@ async function toggleSave(job, button) {
       if (wasSaved) saved.delete(job.id); else saved.set(job.id,job);
     }
     renderCount();
-    if (page === 'saved') await show('saved'); else renderJobs();
+    if (page === 'saved') await show('saved');
+    else {
+      const restoreFocus = document.activeElement === button && button.matches('[data-save]');
+      renderJobs();
+      if (restoreFocus) $('list').querySelector('[data-save="'+CSS.escape(job.id)+'"]')?.focus();
+    }
     if (openedJob?.id === job.id && $('dialog').open) details(job);
   } catch (e) {
     const feedback = $('feedback');
@@ -240,4 +293,5 @@ try {
 } catch (error) { if (error.status === 404) online = false; }
 renderCount();
 show();
+if (online) checkForRoles(false);
 

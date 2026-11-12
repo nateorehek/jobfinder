@@ -2,6 +2,9 @@ import { createServer } from 'node:http';
 import { readFile } from 'node:fs/promises';
 import { openDb, savedJobs, searchJobs } from './lib/db.mjs';
 import { authenticate, getAccount, rateLimiter, signOut } from './lib/auth.mjs';
+import { loadBoards } from './lib/sources.mjs';
+import { createRefresh } from './lib/refresh.mjs';
+import { fields } from './public/fields.js';
 
 const files = new Map([
   ['/', ['index.html', 'text/html; charset=utf-8']],
@@ -61,6 +64,7 @@ export function makeServer(db, config = {}) {
   const authGlobal = rateLimiter(90,60*1000);
   let authInFlight = 0;
   const secure = Boolean(config.publicOrigin?.startsWith('https://'));
+  const refreshRequests = rateLimiter(30,60_000);
   const server = createServer(async (req,res) => {
     securityHeaders(res);
     try {
@@ -80,6 +84,17 @@ export function makeServer(db, config = {}) {
       if (pathname === '/api/jobs' && method === 'GET') {
         const result = searchJobs(db,searchParams);
         return json(res,result.error?400:200,result);
+      }
+      if (pathname === '/api/refresh' && ['GET','POST'].includes(method)) {
+        const field = searchParams.get('field') || '';
+        if (field && !fields.some(entry=>entry.id===field)) throw new HttpError(400,'Invalid academic field.');
+        const refresh = config.refresh;
+        if (!refresh) return json(res,200,{state:'disabled',running:false,boards:0,failed:0,freshness:null});
+        if (method === 'GET') return json(res,200,refresh.status(field));
+        if (!refreshRequests(req.socket.remoteAddress)) throw new HttpError(429,'Please try checking again in a minute.');
+        const {state,promise} = refresh.start(field);
+        promise?.catch(error=>console.error(error));
+        return json(res,state==='started'?202:200,{state,...refresh.status(field)});
       }
       if (['/api/login','/api/register'].includes(pathname) && method === 'POST') {
         const ip = config.trustProxy
@@ -131,8 +146,26 @@ export function makeServer(db, config = {}) {
 if (import.meta.main) {
   const db = openDb(process.env.DB_PATH || './data/fieldwork.sqlite');
   const publicOrigin = process.env.PUBLIC_ORIGIN ? new URL(process.env.PUBLIC_ORIGIN).origin : undefined;
-  makeServer(db,{publicOrigin,trustProxy:process.env.TRUST_PROXY === '1'})
+  const boards = process.env.LIVE_FEEDS === '0' ? [] : loadBoards(process.env.BOARD_CONFIG);
+  const interval = Number(process.env.SYNC_MINUTES || 30);
+  if (!Number.isSafeInteger(interval) || interval < 0 || interval > 1440) throw new Error('SYNC_MINUTES must be between 0 and 1440.');
+  const refresh = createRefresh(db,boards,{interval,social:process.env.BLUESKY_ENABLED !== '0'});
+  if (process.argv.includes('--sync')) {
+    await refresh.start('',true).promise;
+    const status = refresh.status('');
+    console.log(JSON.stringify(status));
+    if (!status.boards || status.boards===status.failed) process.exitCode=1;
+    db.close();
+  } else {
+    const server = makeServer(db,{publicOrigin,trustProxy:process.env.TRUST_PROXY === '1',refresh});
+    const stop = refresh.schedule();
+    for (const signal of ['SIGINT','SIGTERM']) process.once(signal,()=>{
+      stop();
+      server.close(()=>{ process.exit(0); });
+    });
+    server
     .listen(Number(process.env.PORT || 3000),process.env.HOST || '127.0.0.1',() => {
       console.log('Fieldwork listening on port ' + (process.env.PORT || 3000));
     });
+  }
 }

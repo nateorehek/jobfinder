@@ -45,8 +45,9 @@
     </aside>
     <section class="results" id="results" aria-labelledby="results-title">
       <div class="results-head"><div><h2 id="results-title">Explore opportunities</h2><p id="result-count" aria-live="polite"></p></div>
-      <label class="sort"><span class="sr-only">Sort listings</span><select id="sort"><option value="recent">Recently added</option><option value="popular">Most popular</option></select></label></div>
+      <div class="results-actions"><button class="secondary" id="refresh" type="button" hidden>Check for new roles</button><label class="sort"><span class="sr-only">Sort listings</span><select id="sort"><option value="recent">Recently added</option><option value="popular">Most popular</option></select></label></div></div>
       <div id="feed-status" class="feed-status" hidden></div>
+      <p id="refresh-status" class="auth-note" role="status" hidden></p>
       <div id="list" class="list"></div>
       <button class="secondary more" id="more" hidden>Load more</button>
     </section>
