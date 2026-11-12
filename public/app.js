@@ -113,7 +113,6 @@ async function show(nextPage = page, append = false) {
       result = { jobs:rows,total:rows.length,demo:!account && rows.length > 0 };
     } else if (online) {
       result = await api('/jobs?' + query({ ...p, offset }));
-      if (result.demo) result = { ...result, ...demoSearch(p) };
     } else {
       result = demoSearch(p);
     }
@@ -150,7 +149,7 @@ $('browse').onclick = () => show('browse');
 $('saved').onclick = () => show('saved');
 $('more').onclick = () => show(page,true);
 $('close').onclick = () => $('dialog').close();
-$('dialog').addEventListener('close',() => { openedJob = null; });
+$('dialog').addEventListener('close',() => { if (!$('dialog').open) { openedJob = null; pendingSave = null; } });
 $('dialog').setAttribute('aria-labelledby','dialog-title');
 function openDialog(content) {
   $('dialog-content').innerHTML = content;
@@ -222,8 +221,8 @@ function auth(register) {
       const data = await api(register?'/register':'/login',{method:'POST',body:JSON.stringify(Object.fromEntries(new FormData(form)))});
       account = data.account;
       await refreshSaved();
-      renderCount(); $('dialog').close(); await show();
       const target = pendingSave; pendingSave = null;
+      renderCount(); $('dialog').close(); await show();
       if (target && !isSaved(target)) await toggleSave(target,form.querySelector('button'));
     } catch (error) { $('feedback').textContent = error.message; }
     finally { form.querySelector('button').disabled = false; }
