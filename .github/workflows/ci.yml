@@ -1,0 +1,22 @@
+name: Tests
+on: [push, pull_request]
+permissions:
+  contents: read
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '24'
+          package-manager-cache: false
+      - run: node --test
+      - run: docker build -t fieldwork:ci .
+      - name: Check container health
+        run: |
+          docker run --rm -d --name fieldwork-ci -e LIVE_FEEDS=0 -p 127.0.0.1:3000:3000 fieldwork:ci
+          trap 'docker logs fieldwork-ci; docker stop fieldwork-ci' EXIT
+          curl --fail --silent --show-error --retry 10 --retry-connrefused --retry-delay 1 http://127.0.0.1:3000/api/health

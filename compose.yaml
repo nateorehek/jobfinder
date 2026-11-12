@@ -1,0 +1,16 @@
+services:
+  fieldwork:
+    build: .
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:${FIELDWORK_PORT:-3000}:3000"
+    environment:
+      PUBLIC_ORIGIN: "${PUBLIC_ORIGIN:-}"
+      SYNC_MINUTES: "${SYNC_MINUTES:-30}"
+      LIVE_FEEDS: "${LIVE_FEEDS:-1}"
+      BLUESKY_ENABLED: "${BLUESKY_ENABLED:-1}"
+      TRUST_PROXY: "${TRUST_PROXY:-0}"
+    volumes:
+      - fieldwork-data:/app/data
+volumes:
+  fieldwork-data:
