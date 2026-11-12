@@ -17,6 +17,8 @@ jobs:
       - run: docker build -t fieldwork:ci .
       - name: Check container health
         run: |
-          docker run --rm -d --name fieldwork-ci -e LIVE_FEEDS=0 -p 127.0.0.1:3000:3000 fieldwork:ci
-          trap 'docker logs fieldwork-ci; docker stop fieldwork-ci' EXIT
-          curl --fail --silent --show-error --retry 10 --retry-connrefused --retry-delay 1 http://127.0.0.1:3000/api/health
+          docker run --detach --name fieldwork-ci -e LIVE_FEEDS=0 -p 127.0.0.1:3000:3000 fieldwork:ci
+          trap 'docker logs fieldwork-ci || true; docker rm --force fieldwork-ci || true' EXIT
+          curl --fail --silent --show-error --max-time 3 --retry 10 \
+            --retry-all-errors --retry-delay 1 --retry-max-time 25 \
+            http://127.0.0.1:3000/api/health
