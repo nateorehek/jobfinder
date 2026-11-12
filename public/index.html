@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="description" content="Find internships and early-career jobs by major, skill, and location.">
+<title>Fieldwork — Find your next role</title>
+<link rel="icon" href="/mark.svg" type="image/svg+xml">
+<link rel="stylesheet" href="/style.css">
+<script type="module" src="/app.js"></script>
+</head>
+<body>
+<a class="skip" href="#results">Skip to results</a>
+<header class="top"><div class="wrap top-inner">
+  <a class="brand" href="/"><img src="/mark.svg" width="36" height="36" alt="">Fieldwork<span>.</span></a>
+  <nav aria-label="Main navigation"><button class="nav active" id="browse">Explore</button><button class="nav" id="saved">Saved <span id="saved-count" class="count" hidden></span></button></nav>
+  <div class="top-actions"><button class="icon-button" id="theme" aria-label="Switch color mode"></button><button class="primary" id="account">Sign in</button></div>
+</div></header>
+<main class="wrap">
+  <section class="hero">
+    <div class="hero-art" aria-hidden="true"><i></i><i></i><i></i><b>✦</b><b>✧</b></div>
+    <div class="hero-content">
+      <h1>Find your <em>next role.</em></h1>
+      <p>Discover internships and early-career jobs by major, skill, or location.</p>
+      <form id="search" class="search">
+        <label class="search-field"><span data-icon="search"></span><span class="sr-only">Keyword</span><input id="query" type="search" maxlength="100" placeholder="Job title, skill, or company"></label>
+        <label class="search-field zip"><span data-icon="pin"></span><span class="sr-only">US ZIP code</span><input id="zip" inputmode="numeric" pattern="[0-9]{5}" maxlength="5" placeholder="US ZIP code"></label>
+        <button class="primary" type="submit">Search jobs <span data-icon="arrow"></span></button>
+      </form>
+    </div>
+  </section>
+  <div class="workspace">
+    <aside class="filters" aria-label="Listing filters">
+      <div class="filter-head"><h2>Filters</h2><button id="clear" class="text-button">Clear all</button></div>
+      <fieldset><legend>Academic field</legend><div id="fields"></div></fieldset>
+      <fieldset><legend>Role type</legend>
+        <label class="check"><input id="intern" type="checkbox"> Internships</label>
+        <label class="check"><input id="full" type="checkbox"> Jobs</label>
+      </fieldset>
+      <fieldset><legend>Location</legend>
+        <label class="check"><input id="remote" type="checkbox"> Remote only</label>
+        <label class="check" id="include-remote-label" hidden><input id="include-remote" type="checkbox"> Include remote roles</label>
+        <label class="radius">Search radius <select id="radius"><option value="10">10 miles</option><option value="25" selected>25 miles</option><option value="50">50 miles</option><option value="100">100 miles</option><option value="250">250 miles</option></select></label>
+      </fieldset>
+    </aside>
+    <section class="results" id="results" aria-labelledby="results-title">
+      <div class="results-head"><div><h2 id="results-title">Explore opportunities</h2><p id="result-count" aria-live="polite"></p></div>
+      <label class="sort"><span class="sr-only">Sort listings</span><select id="sort"><option value="recent">Recently added</option><option value="popular">Most popular</option></select></label></div>
+      <div id="feed-status" class="feed-status" hidden></div>
+      <div id="list" class="list"></div>
+      <button class="secondary more" id="more" hidden>Load more</button>
+    </section>
+  </div>
+</main>
+<footer class="wrap footer"><a class="brand" href="/"><img src="/mark.svg" width="24" height="24" alt="">Fieldwork<span>.</span></a><span>Search by US ZIP code · Distances are approximate</span></footer>
+<dialog id="dialog"><div class="dialog-inner"><button class="icon-button close" id="close" aria-label="Close dialog" data-icon="close"></button><div id="dialog-content"></div></div></dialog>
+</body>
+</html>
